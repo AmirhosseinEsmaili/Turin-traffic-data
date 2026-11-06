@@ -1,0 +1,24 @@
+# Test of recording Torino's live feed on GitHub's computers. In the repository, put this file at .github/workflows/torino.yml
+# Asks for a reading every 5 minutes (or when started by hand) and saves it in data/. GitHub may start jobs late or drop them, so count the files afterwards.
+name: Torino test
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+permissions:
+  contents: write
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Save the latest reading
+        run: |
+          mkdir -p data
+          curl -fsS --max-time 60 -A "Mozilla/5.0" https://opendata.5t.torino.it/get_fdt -o "data/$(date -u +%Y%m%d_%H%M%S).xml"
+          git config user.name "torino-test"
+          git config user.email "torino-test@users.noreply.github.com"
+          git add data
+          git commit -m "reading"
+          git push
